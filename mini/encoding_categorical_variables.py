@@ -1,6 +1,6 @@
 import pandas as pd
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder
-from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 import joblib
@@ -60,6 +60,34 @@ def train_and_evaluate_model(X, y):
     accuracy = accuracy_score(y_test, y_pred)
     return accuracy, model
 
+# Cross-Validation & Hyperparameter Tuning
+def train_with_cv_and_tuning(X, y):
+    param_grid = {
+        'C': [0.01, 0.1, 1, 10, 100],
+        'solver': ['liblinear', 'saga'],
+        'penalty': ['l1', 'l2'] # Lasso Regularization, Ridge Regularization
+    }
+
+    model = LogisticRegression(max_iter=2000)
+    grid_search = GridSearchCV(model, param_grid, cv=5, scoring='accuracy', n_jobs=-1)
+    grid_search.fit(X, y)
+
+    best_model = grid_search.best_estimator_
+    best_params = grid_search.best_params_
+    best_score = grid_search.best_score_
+
+    print("Best Params:", best_params)
+    print("Best CV Accuracy:", best_score)
+
+    return best_model, best_score
+
+def cross_validate_model(model, X, y, cv=5):
+    # Perform k-fold cross-validation
+    scores = cross_val_score(model, X, y, cv=cv, scoring='accuracy')
+    print(f"Cross-validation scores (cv={cv}):", scores)
+    print("Mean CV Accuracy:", scores.mean())
+    return scores
+
 if __name__ == "__main__":
     df = preprocess_data(df)
     # Identify categorical columns
@@ -99,10 +127,18 @@ if __name__ == "__main__":
 
     X = df_encoded_train.drop(columns=["Survived", "PassengerId", "Name", "Ticket", "Cabin"])
     y = df_encoded_train["Survived"]
+
     accuracy, model = train_and_evaluate_model(X, y)
     print(f"Logistic Regression Accuracy: {accuracy:.4f}")
 
     # Save the trained model
     joblib.dump(model, "logistic_model.pkl")
     print("Model saved as logistic_model.pkl")
+
+    # Train and evaluate model with cross-validation and hyperparameter tuning
+    best_model, best_score = train_with_cv_and_tuning(X, y)
+    joblib.dump(best_model, "logistic_model_tuned.pkl")
+    print("Tuned model saved as logistic_model_tuned.pkl")
     
+     # Cross-validation evaluation
+    cross_validate_model(LogisticRegression(max_iter=2000, solver='liblinear'), X, y, cv=5)
