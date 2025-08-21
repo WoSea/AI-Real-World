@@ -206,3 +206,6 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 *.pkl
+*.tfevents
+*.tsv
+catboost_info/catboost_training.json
