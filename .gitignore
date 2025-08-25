@@ -209,3 +209,5 @@ __marimo__/
 *.tfevents
 *.tsv
 catboost_info/catboost_training.json
+*.h5
+*.pth
